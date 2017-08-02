@@ -24,23 +24,32 @@ load.data <- function(url, filename, from, to) {
     return(d)
 } 
 
-## Function to plot histogram
-## It receives data, graphic title, color, x and y labels
+## Function to plot line chart
+## It receives data, x variable name, y variable names/colors data frame, x and y labels
+## It plots lines by colors provided and then plots a legend with each line
 ## It can save to PNG file with dimensions of 480x480 if savetofile is true
-plot.study <- function(data, var ,main,color,xlab, ylab, savetofile) {
+plot.study <- function(data, xvar, yvars ,xlab = "", ylab = "", savetofile) {
     if (!missing(savetofile) && savetofile) {
-        png(filename = "./plot1.png")
+        png(filename = "./plot3.png")
     }
-    hist(data[,c(var)], col = color, main = main,xlab = xlab)
+    with(data,{
+        plot(eval(as.symbol(xvar)),eval(as.symbol(yvars$var)),type = "n", xlab = xlab, ylab = ylab)
+        apply(yvars,1,FUN = function(y) lines(eval(as.symbol(xvar)), y = eval(as.symbol(y["var"])), col = y["color"]) )
+        lty = rep(1,each=nrow(yvars))
+        lwd = rep(2.5,each=nrow(yvars))
+        legend("topright", lty = lty, lwd = lwd,col = yvars$color, legend = yvars$var)
+    })
     if (!missing(savetofile) && savetofile) {
         dev.off()
     }
 }
+
 url = "https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2Fhousehold_power_consumption.zip"
 data <- load.data(url,"household_power_consumption.zip","1/2/2007","2/2/2007") ## Load data
 
-## Plot histogram of Global Active Power
-plot.study(data,"Global_active_power",color = "red", 
-           xlab = "Global Active Power (kilowatts)", 
-           main = "Global Active Power",
+## Plot line chart of Sub meters measures by DateTime
+plot.study(data,xvar = "DateTime", 
+           yvars = data.frame(var = c("Sub_metering_1","Sub_metering_2", "Sub_metering_3"),
+                        color = c("black","red","blue"), stringsAsFactors = FALSE),
+           ylab = "Energy sub metering",
            savetofile = TRUE)
